@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HABITFLUX – Login</title>
+
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* ═══════════════════════════════════════════════════════
+           HABITFLUX – Auth Page Styles
+           ═══════════════════════════════════════════════════════ */
+
+        :root {
+            --navy:        #001F3F;
+            --beige:       #F5F5DC;
+            --dark-navy:   #001122;
+            --navy-light:  #1A365D;
+            --navy-glow:   rgba(0, 31, 63, 0.3);
+            --beige-dark:  #e8e8c8;
+            --beige-light: #fafaed;
+            --red:         #e74c3c;
+            --red-bg:      rgba(231, 76, 60, 0.12);
+            --text-primary:   #001F3F;
+            --text-secondary: #334e68;
+            --text-muted:     #627d98;
+            --border:         rgba(0, 31, 63, 0.15);
+            --navy-glow:      rgba(0, 31, 63, 0.3);
+            --shadow-sm: 0 2px 8px  rgba(0, 17, 34, 0.08);
+            --shadow-lg: 0 12px 40px rgba(0, 17, 34, 0.16);
+            --font:      'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            font-family: var(--font);
+            background: linear-gradient(135deg, var(--navy) 0%, var(--dark-navy) 50%, #000c1a 100%);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { text-decoration: none; }
+
+        .link-accent { color: var(--navy-light); font-weight: 600; }
+        .link-accent:hover { color: var(--navy); text-decoration: underline; }
+
+        /* ── Auth Card ─────────────────────────────────────── */
+        .auth-card {
+            background: var(--beige);
+            border: 1px solid rgba(0, 31, 63, 0.1);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* ── Brand ─────────────────────────────────────────── */
+        .brand-icon { font-size: 2.5rem; }
+
+        .brand-title {
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--dark-navy), var(--navy), var(--navy-light));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% 200%;
+            animation: shimmer 3s ease infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { background-position: 0% 50%; }
+            50%       { background-position: 100% 50%; }
+        }
+
+        /* ── Form Controls ──────────────────────────────────── */
+        .form-control {
+            background: var(--beige);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.7rem 1rem;
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+        .form-control:focus {
+            background: var(--beige-light);
+            border-color: var(--navy);
+            box-shadow: 0 0 0 3px var(--navy-glow);
+            color: var(--text-primary);
+        }
+        .form-control::placeholder { color: var(--text-muted); }
+        .form-label { color: var(--navy); font-size: 0.85rem; font-weight: 600; }
+
+        /* ── Buttons ────────────────────────────────────────── */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--navy), var(--dark-navy));
+            border: none;
+            color: var(--beige) !important;
+            font-weight: 600;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--dark-navy), #000c1a);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,17,34,0.12);
+            color: var(--beige) !important;
+        }
+
+        /* ── Alert ──────────────────────────────────────────── */
+        .alert-danger {
+            background-color: var(--red-bg);
+            border-color: rgba(231, 76, 60, 0.2);
+            color: var(--red);
+        }
+
+        h4 { color: var(--navy); }
+        .text-muted { color: var(--text-secondary) !important; }
+    </style>
+</head>
+<body>
+
+    <div class="d-flex align-items-center justify-content-center min-vh-100 p-4">
+        <div class="auth-card rounded-4 p-5" style="width:100%; max-width:440px;">
+
+            <!-- Branding -->
+            <div class="text-center mb-4">
+                <div class="brand-icon mb-2">🌊</div>
+                <h1 class="brand-title fs-3 mb-1">HABITFLUX</h1>
+                <p class="text-muted small mb-0">Smart Routine Monitoring</p>
+            </div>
+
+            <!-- ── Login Form ──────────────────────────────── -->
+            <form id="loginForm">
+                <h4 class="mb-4 text-center">Welcome Back 🌊</h4>
+                <div class="alert alert-danger d-none py-2 small" id="loginError"></div>
+
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" id="loginEmail" required placeholder="you@example.com">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-control" id="loginPassword" required placeholder="••••••••">
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 mb-3">Sign In</button>
+                <p class="text-center small" style="color:var(--text-secondary);">
+                    Don't have an account?
+                    <a href="#" class="link-accent" id="showSignup">Sign Up</a>
+                </p>
+            </form>
+
+            <!-- ── Signup Form ────────────────────────────── -->
+            <form id="signupForm" class="d-none">
+                <h4 class="mb-4 text-center">Create Account 🌊</h4>
+                <div class="alert alert-danger d-none py-2 small" id="signupError"></div>
+
+                <div class="mb-3">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-control" id="signupName" required placeholder="Varshith Comple">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" id="signupEmail" required placeholder="you@example.com">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-control" id="signupPassword" required minlength="4" placeholder="••••••••">
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 mb-3">Register</button>
+                <p class="text-center small" style="color:var(--text-secondary);">
+                    Already have an account?
+                    <a href="#" class="link-accent" id="showLogin">Sign In</a>
+                </p>
+            </form>
+
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        /* ════════════════════════════════════════════════════
+           Auth Logic – GitHub Pages compatible
+           ════════════════════════════════════════════════════ */
+
+        // Base path for GitHub Pages: username.github.io/FWD-Project
+        function goTo(file) {
+            window.location.href = '/FWD-Project/' + file;
+        }
+
+        // Redirect if already logged in
+        if (localStorage.getItem('hf_currentUser')) {
+            goTo('app.html');
+        }
+
+        // Handle redirect from 404.html
+        const redirect = sessionStorage.getItem('hf_redirect');
+        if (redirect && redirect !== '/') {
+            sessionStorage.removeItem('hf_redirect');
+            if (redirect.includes('app.html') && localStorage.getItem('hf_currentUser')) {
+                goTo('app.html');
+            }
+        }
+
+        // Toggle forms
+        document.getElementById('showSignup').addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('loginForm').classList.add('d-none');
+            document.getElementById('signupForm').classList.remove('d-none');
+        });
+
+        document.getElementById('showLogin').addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('signupForm').classList.add('d-none');
+            document.getElementById('loginForm').classList.remove('d-none');
+        });
+
+        // Signup
+        document.getElementById('signupForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const name     = document.getElementById('signupName').value.trim();
+            const email    = document.getElementById('signupEmail').value.trim().toLowerCase();
+            const password = document.getElementById('signupPassword').value;
+            const errEl    = document.getElementById('signupError');
+
+            errEl.classList.add('d-none');
+
+            const users = JSON.parse(localStorage.getItem('hf_users') || '[]');
+            if (users.find(u => u.email === email)) {
+                errEl.textContent = 'An account with this email already exists.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+
+            users.push({ name, email, password });
+            localStorage.setItem('hf_users', JSON.stringify(users));
+            localStorage.setItem('hf_currentUser', JSON.stringify({ name, email }));
+            goTo('app.html');
+        });
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const email    = document.getElementById('loginEmail').value.trim().toLowerCase();
+            const password = document.getElementById('loginPassword').value;
+            const errEl    = document.getElementById('loginError');
+
+            errEl.classList.add('d-none');
+
+            const users = JSON.parse(localStorage.getItem('hf_users') || '[]');
+            const user  = users.find(u => u.email === email && u.password === password);
+
+            if (!user) {
+                errEl.textContent = 'Invalid email or password.';
+                errEl.classList.remove('d-none');
+                return;
+            }
+
+            localStorage.setItem('hf_currentUser', JSON.stringify({ name: user.name, email: user.email }));
+            goTo('app.html');
+        });
+    </script>
+
+</body>
+</html>

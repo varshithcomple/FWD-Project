@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HABITFLUX – Redirecting...</title>
+    <script>
+        // GitHub Pages SPA redirect trick
+        // Saves the current path and redirects to index.html
+        // index.html then picks it up and navigates correctly
+        const path = window.location.pathname + window.location.search + window.location.hash;
+        sessionStorage.setItem('hf_redirect', path);
+        window.location.replace('/FWD-Project/');
+    </script>
+</head>
+<body>
+    <p>Redirecting...</p>
+</body>
+</html>
