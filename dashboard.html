@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HABITFLUX – Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy: #1e2d45;
+      --navy-dark: #141f30;
+      --navy-mid: #243450;
+      --cream: #f5f0e6;
+      --cream-card: #f7f3eb;
+      --orange: #c8501a;
+      --orange-light: #e06030;
+      --gold: #d4a847;
+      --green: #4caf82;
+      --red: #e05050;
+      --text-muted: #8b9bb4;
+      --sidebar-w: 220px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--navy-dark);
+      color: var(--cream);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ─── SIDEBAR ─── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--navy-dark);
+      border-right: 1px solid rgba(255,255,255,0.06);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0;
+      z-index: 50;
+      padding: 1.5rem 1rem;
+    }
+    .sidebar-logo { margin-bottom: 2rem; }
+    .sidebar-logo .logo-top {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.05rem;
+      margin-bottom: 0.2rem;
+    }
+    .sidebar-logo .logo-sub { font-size: 0.7rem; color: var(--text-muted); }
+    .nav-item {
+      display: flex; align-items: center; gap: 0.7rem;
+      padding: 0.6rem 0.8rem; border-radius: 8px;
+      font-size: 0.88rem; cursor: pointer;
+      color: var(--text-muted);
+      transition: background 0.15s, color 0.15s;
+      margin-bottom: 0.2rem;
+      border: none; background: transparent; width: 100%; text-align: left;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--cream); }
+    .nav-item.active { background: var(--navy-mid); color: var(--cream); }
+    .sidebar-footer { margin-top: auto; }
+    .sidebar-footer .user-hello { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .sidebar-footer .logout-btn {
+      display: flex; align-items: center; gap: 0.4rem;
+      font-size: 0.82rem; color: var(--orange-light);
+      cursor: pointer; background: none; border: none;
+      padding: 0.4rem 0;
+    }
+    .sidebar-footer .logout-btn:hover { color: var(--orange); }
+
+    /* ─── MAIN ─── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      padding: 0;
+      overflow-y: auto;
+      min-height: 100vh;
+    }
+
+    /* ─── PAGES ─── */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ─── HEADER BAR ─── */
+    .page-header {
+      background: linear-gradient(135deg, var(--navy-mid) 0%, var(--navy) 100%);
+      padding: 1.5rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      flex-wrap: wrap; gap: 1rem;
+    }
+    .page-header-left h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 1.5rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .page-header-left p { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem; }
+    .header-actions { display: flex; align-items: center; gap: 0.8rem; }
+    .date-label { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.3rem; }
+    input[type="date"] {
+      background: var(--navy-dark);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px; color: var(--cream);
+      padding: 0.4rem 0.7rem; font-size: 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .btn {
+      padding: 0.5rem 1.1rem; border-radius: 8px;
+      font-size: 0.85rem; font-weight: 500; cursor: pointer;
+      border: none; font-family: 'DM Sans', sans-serif;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-dark { background: var(--navy-dark); color: var(--cream); border: 1px solid rgba(255,255,255,0.15); }
+    .btn-primary { background: #1e2d45; color: var(--cream); border: 1px solid rgba(255,255,255,0.2); }
+    .btn-outline { background: transparent; color: var(--cream); border: 1px solid rgba(255,255,255,0.2); }
+    .btn-orange { background: var(--orange); color: #fff; }
+    .btn-navy-solid { background: var(--navy); color: var(--cream); border: 1px solid rgba(255,255,255,0.12); }
+
+    /* ─── STAT CARDS ─── */
+    .stat-cards {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1rem; padding: 1.5rem 2rem;
+    }
+    .stat-card {
+      background: var(--cream-card);
+      border-radius: 12px; padding: 1.2rem 1.4rem;
+      color: var(--navy);
+    }
+    .stat-card.dark { background: var(--navy-mid); color: var(--cream); }
+    .stat-card .sc-icon { font-size: 1.1rem; margin-bottom: 0.6rem; }
+    .stat-card .sc-label {
+      font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: #888; display: flex; align-items: center; gap: 0.3rem;
+      margin-bottom: 0.4rem;
+    }
+    .stat-card.dark .sc-label { color: var(--text-muted); }
+    .stat-card .sc-val {
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem;
+    }
+    .stat-card .sc-sub { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+    /* ─── GRID LAYOUTS ─── */
+    .two-col { display: grid; grid-template-columns: 1fr 320px; gap: 1rem; padding: 0 2rem; }
+    .full-col { padding: 0 2rem; }
+    .section-gap { margin-bottom: 1rem; }
+
+    /* ─── CARDS ─── */
+    .card {
+      background: var(--cream-card);
+      border-radius: 12px; padding: 1.4rem;
+      color: var(--navy);
+    }
+    .card.dark { background: var(--navy-mid); color: var(--cream); }
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 1rem;
+      display: flex; align-items: center; gap: 0.4rem;
+      margin-bottom: 0.8rem;
+    }
+    .card-sub { font-size: 0.82rem; color: var(--text-muted); }
+    .card-sm {
+      background: var(--cream-card);
+      border-radius: 12px; padding: 1rem 1.4rem;
+      color: var(--navy); margin-bottom: 1rem;
+    }
+    .card-sm .cs-label {
+      font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em;
+      color: #999; margin-bottom: 0.4rem;
+      display: flex; align-items: center; gap: 0.3rem;
+    }
+    .card-sm .cs-val { font-size: 0.9rem; font-weight: 600; }
+    .tag-green { color: var(--green); }
+    .tag-red { color: var(--red); }
+    .tag-muted { color: var(--text-muted); }
+
+    /* ─── CHART CONTAINERS ─── */
+    .chart-wrap { position: relative; height: 200px; margin-top: 0.8rem; }
+    .chart-legend {
+      display: flex; gap: 1rem; flex-wrap: wrap;
+      font-size: 0.72rem; margin-bottom: 0.5rem; color: #666;
+    }
+    .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; }
+
+    /* ─── TABLE ─── */
+    .routines-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    .routines-table th {
+      font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); padding: 0.7rem 0.8rem; text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .routines-table td {
+      padding: 0.8rem 0.8rem; font-size: 0.85rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      color: var(--navy);
+    }
+    .table-card { background: var(--cream-card); border-radius: 12px; overflow: hidden; padding: 1.4rem; }
+    .table-card .card-title { color: var(--navy); }
+    .priority-badge {
+      font-size: 0.75rem; font-weight: 600; color: var(--gold);
+    }
+    .action-btn {
+      padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.75rem;
+      cursor: pointer; font-family: 'DM Sans', sans-serif;
+      border: 1px solid rgba(0,0,0,0.15); background: #fff;
+      color: var(--navy); transition: background 0.15s;
+    }
+    .action-btn:hover { background: var(--cream); }
+    .action-btn.del { color: var(--red); border-color: rgba(224,80,80,0.3); }
+    .action-btn.del:hover { background: rgba(224,80,80,0.1); }
+
+    /* ─── MODAL ─── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--cream-card);
+      border-radius: 16px; padding: 2rem;
+      width: 90%; max-width: 480px;
+      color: var(--navy);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .modal-header h2 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; }
+    .modal-close {
+      background: none; border: none; font-size: 1.2rem;
+      cursor: pointer; color: var(--navy); line-height: 1;
+    }
+    .form-group { margin-bottom: 1.2rem; }
+    .form-group label { display: block; font-size: 0.82rem; font-weight: 500; margin-bottom: 0.4rem; color: var(--navy); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-input, .form-select {
+      width: 100%; padding: 0.6rem 0.8rem;
+      border: 1.5px solid rgba(0,0,0,0.12); border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+      background: #fff; color: var(--navy);
+      outline: none; transition: border-color 0.15s;
+    }
+    .form-input:focus, .form-select:focus { border-color: var(--navy); }
+    .btn-save {
+      width: 100%; padding: 0.85rem;
+      background: var(--navy); color: var(--cream);
+      border: none; border-radius: 10px;
+      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.95rem;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .btn-save:hover { background: var(--navy-mid); }
+
+    /* ─── LOG MODAL ─── */
+    .log-modal { max-width: 380px; }
+
+    /* ─── SETTINGS PAGE ─── */
+    .settings-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1rem; padding: 1.5rem 2rem;
+    }
+    .settings-card {
+      background: var(--cream-card);
+      border-radius: 12px; padding: 1.6rem;
+      color: var(--navy);
+    }
+    .settings-card h2 {
+      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.05rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-bottom: 1.4rem;
+    }
+    .settings-card h2.orange { color: var(--orange); }
+    .settings-label { font-size: 0.82rem; font-weight: 500; margin-bottom: 0.4rem; color: var(--navy); display: block; }
+    .settings-input {
+      width: 100%; padding: 0.6rem 0.8rem;
+      border: 1.5px solid rgba(0,0,0,0.12); border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+      background: var(--cream); color: var(--navy);
+      margin-bottom: 1rem; outline: none;
+    }
+    .settings-input:focus { border-color: var(--navy); }
+    .settings-btn {
+      padding: 0.55rem 1.2rem; border-radius: 8px;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: opacity 0.15s;
+    }
+    .settings-btn:hover { opacity: 0.85; }
+    .settings-btn.solid { background: var(--navy); color: var(--cream); border: none; }
+    .settings-btn.outline { background: transparent; color: var(--navy); border: 1.5px solid rgba(0,0,0,0.18); }
+    .settings-btn.danger { background: transparent; color: var(--red); border: 1.5px solid rgba(224,80,80,0.35); }
+    .toggle-row {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 1.2rem; gap: 1rem;
+    }
+    .toggle-info h4 { font-size: 0.88rem; font-weight: 600; margin-bottom: 0.2rem; }
+    .toggle-info p { font-size: 0.75rem; color: #888; line-height: 1.4; }
+    .toggle {
+      position: relative; width: 42px; height: 24px; flex-shrink: 0;
+    }
+    .toggle input { display: none; }
+    .toggle-track {
+      position: absolute; inset: 0;
+      background: #ccc; border-radius: 99px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle input:checked + .toggle-track { background: var(--green); }
+    .toggle-thumb {
+      position: absolute; top: 3px; left: 3px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #fff; transition: left 0.2s;
+      pointer-events: none;
+    }
+    .toggle input:checked ~ .toggle-thumb { left: 21px; }
+    .data-btns { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.5rem; }
+    .pref-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+
+    /* ─── HISTORY PAGE ─── */
+    .history-content { padding: 1.5rem 2rem; }
+    .history-empty { text-align: center; padding: 3rem; color: var(--text-muted); font-size: 0.9rem; }
+    .history-table { width: 100%; border-collapse: collapse; }
+    .history-table th {
+      font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); padding: 0.7rem 0.8rem; text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .history-table td {
+      padding: 0.8rem 0.8rem; font-size: 0.84rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      color: var(--cream);
+    }
+
+    /* ─── DRIFT TREND ─── */
+    .drift-chart-wrap { height: 160px; position: relative; }
+
+    /* ─── SPACING ─── */
+    .mb1 { margin-bottom: 1rem; }
+    .mt1 { margin-top: 1rem; }
+    .pb2 { padding-bottom: 2rem; }
+
+    /* ─── TOAST ─── */
+    .toast {
+      position: fixed; bottom: 2rem; right: 2rem;
+      background: var(--navy-mid); color: var(--cream);
+      padding: 0.7rem 1.2rem; border-radius: 8px;
+      font-size: 0.85rem; z-index: 300;
+      display: none; border-left: 3px solid var(--green);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+    .toast.show { display: block; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 900px) {
+      .stat-cards { grid-template-columns: repeat(2,1fr); }
+      .two-col { grid-template-columns: 1fr; }
+      .settings-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-top">🌊 HABITFLUX</div>
+    <div class="logo-sub">Smart Drift Analysis</div>
+  </div>
+
+  <button class="nav-item active" onclick="showPage('dashboard', this)">📊 Dashboard</button>
+  <button class="nav-item" onclick="showPage('add-routine-page', this)">➕ Add Routine</button>
+  <button class="nav-item" onclick="showPage('settings', this)">⚙️ Settings</button>
+  <button class="nav-item" onclick="showPage('history', this)">🕐 History</button>
+  <button class="nav-item" onclick="exportPDF()">📄 Export PDF</button>
+
+  <div class="sidebar-footer">
+    <div class="user-hello">Hello, VARSHITH COMPLE! 👋</div>
+    <button class="logout-btn">↩ Logout</button>
+  </div>
+</aside>
+
+<!-- ═══════════════════ MAIN ═══════════════════ -->
+<main class="main">
+
+  <!-- ─── DASHBOARD PAGE ─── -->
+  <div class="page active" id="dashboard">
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1>🌊 Dashboard Overview</h1>
+        <p>Monitor your daily productivity and drift analysis</p>
+      </div>
+      <div class="header-actions">
+        <span class="date-label">📅 Date:</span>
+        <input type="date" id="dashDate" onchange="onDateChange()"/>
+        <button class="btn btn-primary" onclick="openAddModal()">➕ Add Routine</button>
+        <button class="btn btn-outline" onclick="exportPDF()">📄 Export PDF</button>
+      </div>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="stat-cards">
+      <div class="stat-card">
+        <div class="sc-icon">📅</div>
+        <div class="sc-label">📋 TOTAL PLANNED</div>
+        <div class="sc-val" id="totalPlanned">0m</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-icon">🕐</div>
+        <div class="sc-label">⏱ TOTAL ACTUAL</div>
+        <div class="sc-val" id="totalActual">0m</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-icon">📊</div>
+        <div class="sc-label">📉 TOTAL DRIFT</div>
+        <div class="sc-val" id="totalDrift">0m</div>
+      </div>
+      <div class="stat-card dark">
+        <div class="sc-icon">⚡</div>
+        <div class="sc-label">🏆 PRODUCTIVITY</div>
+        <div class="sc-val" id="productivity">0%</div>
+        <div class="sc-sub">–</div>
+      </div>
+    </div>
+
+    <!-- SMART INSIGHT + SIDE PANELS -->
+    <div class="two-col section-gap">
+      <div class="card dark">
+        <div class="card-title">🧠 Smart Insight</div>
+        <div class="card-sub" id="smartInsight">Log your first activity to unlock AI-powered productivity insights.</div>
+      </div>
+      <div>
+        <div class="card-sm">
+          <div class="cs-label">⚡ TODAY'S DRIFT LEVEL</div>
+          <div class="cs-val tag-green" id="driftLevel">No Data</div>
+        </div>
+        <div class="card-sm">
+          <div class="cs-label">⚠️ MOST MISSED TASK</div>
+          <div class="cs-val tag-red" id="mostMissed">–</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="two-col section-gap">
+      <div class="card">
+        <div class="card-title">📊 Routine Comparison</div>
+        <div class="chart-legend">
+          <span><span class="legend-dot" style="background:#3d5a80"></span>Planned (mins)</span>
+          <span><span class="legend-dot" style="background:#4caf82"></span>Actual (mins)</span>
+        </div>
+        <div class="chart-wrap"><canvas id="comparisonChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🍩 Productive vs Wasted</div>
+        <div class="chart-legend">
+          <span><span class="legend-dot" style="background:#4caf82"></span>Productive</span>
+          <span><span class="legend-dot" style="background:#e05050"></span>Drift</span>
+        </div>
+        <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- DRIFT TREND -->
+    <div class="full-col section-gap">
+      <div class="card">
+        <div class="card-title">📈 Drift Trend</div>
+        <div class="chart-legend">
+          <span><span class="legend-dot" style="background:#e05050"></span>Drift</span>
+        </div>
+        <div class="drift-chart-wrap"><canvas id="driftChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- SMART SUGGESTIONS -->
+    <div class="full-col section-gap">
+      <div class="card">
+        <div class="card-title">🌟 Smart Suggestions</div>
+        <div class="card-sub" id="suggestions">Log activities to unlock smart suggestions.</div>
+      </div>
+    </div>
+
+    <!-- ROUTINES TABLE -->
+    <div class="full-col pb2 section-gap">
+      <div class="table-card">
+        <div class="card-title">📝 Routines</div>
+        <table class="routines-table">
+          <thead>
+            <tr>
+              <th>TASK</th><th>PLANNED</th><th>ACTUAL</th>
+              <th>DRIFT</th><th>STATUS</th><th>PRIORITY</th><th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="routinesTbody">
+            <tr><td colspan="7" style="color:#aaa;font-size:0.82rem;padding:1.5rem 0.8rem;">No routines for this date. Click "Add Routine" to get started.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- /dashboard -->
+
+
+  <!-- ─── ADD ROUTINE PAGE ─── -->
+  <div class="page" id="add-routine-page">
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1>➕ Add Routine</h1>
+        <p>Schedule a new planned task for your day</p>
+      </div>
+    </div>
+    <div style="padding:1.5rem 2rem; max-width:560px;">
+      <div class="settings-card">
+        <h2>📝 New Planned Routine</h2>
+        <label class="settings-label">Task Name</label>
+        <input class="settings-input" id="ar-task" placeholder="e.g. Study Session"/>
+        <div class="pref-row">
+          <div>
+            <label class="settings-label">Start Time</label>
+            <input type="time" class="settings-input" id="ar-start"/>
+          </div>
+          <div>
+            <label class="settings-label">End Time</label>
+            <input type="time" class="settings-input" id="ar-end"/>
+          </div>
+        </div>
+        <label class="settings-label">Priority</label>
+        <select class="settings-input" id="ar-priority">
+          <option>Low</option>
+          <option selected>Medium</option>
+          <option>High</option>
+        </select>
+        <button class="btn-save" onclick="saveRoutineFromPage()">💾 Save Routine</button>
+      </div>
+    </div>
+  </div><!-- /add-routine-page -->
+
+
+  <!-- ─── SETTINGS PAGE ─── -->
+  <div class="page" id="settings">
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1>⚙️ Settings</h1>
+        <p>Manage your profile, preferences, and data</p>
+      </div>
+    </div>
+    <div class="settings-grid">
+      <!-- Profile -->
+      <div class="settings-card">
+        <h2>👤 Profile Settings</h2>
+        <label class="settings-label">Full Name</label>
+        <input class="settings-input" id="s-name" value="VARSHITH COMPLE"/>
+        <label class="settings-label">Email Address</label>
+        <input class="settings-input" id="s-email" value="comple.varshith14@gmail.com"/>
+        <button class="settings-btn solid" onclick="updateProfile()">Update Profile</button>
+
+        <hr style="border:none;border-top:1px solid rgba(0,0,0,0.08);margin:1.4rem 0;"/>
+        <h2 style="font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-bottom:1rem;">Change Password</h2>
+        <label class="settings-label">Current Password</label>
+        <input type="password" class="settings-input" id="s-curpass"/>
+        <label class="settings-label">New Password</label>
+        <input type="password" class="settings-input" id="s-newpass"/>
+        <button class="settings-btn outline" onclick="changePassword()">Change Password</button>
+      </div>
+
+      <!-- Notifications -->
+      <div class="settings-card">
+        <h2>🔔 Notification Settings</h2>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <h4>Enable Drift Alerts</h4>
+            <p>Get notified when your activity drifts from the plan.</p>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="n-drift"/>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <h4>Enable Daily Productivity Summary</h4>
+            <p>Receive a summary of your achievements every evening.</p>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="n-summary"/>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <h4>Enable Task Reminders</h4>
+            <p>Get reminders before your scheduled tasks begin.</p>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="n-reminders"/>
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Routine Preferences -->
+      <div class="settings-card">
+        <h2>⚙️ Routine Preferences</h2>
+        <div class="pref-row">
+          <div>
+            <label class="settings-label">Start of Day Time</label>
+            <input type="time" class="settings-input" id="s-startday" value="08:00"/>
+          </div>
+          <div>
+            <label class="settings-label">Default Task Duration (mins)</label>
+            <input type="number" class="settings-input" id="s-duration" value="30"/>
+          </div>
+        </div>
+        <label class="settings-label">Default Priority</label>
+        <select class="settings-input" id="s-defpriority">
+          <option>Low</option>
+          <option selected>Medium</option>
+          <option>High</option>
+        </select>
+        <button class="settings-btn solid" onclick="savePreferences()">Save Preferences</button>
+      </div>
+
+      <!-- Data Management -->
+      <div class="settings-card">
+        <h2 class="orange">🗄️ Data Management</h2>
+        <p style="font-size:0.82rem;color:#888;margin-bottom:1.2rem;">Export your data for backup or clear your history to start fresh.</p>
+        <div class="data-btns">
+          <button class="settings-btn outline" onclick="exportJSON()">⬇ Export JSON</button>
+          <button class="settings-btn outline" onclick="exportPDF()">📄 Download PDF</button>
+          <button class="settings-btn danger" onclick="clearAllData()">🗑 Clear All Data</button>
+        </div>
+      </div>
+    </div>
+  </div><!-- /settings -->
+
+
+  <!-- ─── HISTORY PAGE ─── -->
+  <div class="page" id="history">
+    <div class="page-header">
+      <div class="page-header-left">
+        <h1>🕐 History</h1>
+        <p>Review all your past routines and drift scores</p>
+      </div>
+    </div>
+    <div class="history-content">
+      <div class="card dark" style="margin-bottom:1rem;">
+        <div class="card-title">📋 All Logged Routines</div>
+        <div id="historyContent">
+          <div class="history-empty">No history yet. Start logging your routines to see them here.</div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /history -->
+
+</main><!-- /main -->
+
+
+<!-- ═══════════════════ ADD ROUTINE MODAL ═══════════════════ -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>📝 Add Planned Routine</h2>
+      <button class="modal-close" onclick="closeAddModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Task Name</label>
+      <input class="form-input" id="m-task" placeholder="e.g. Study Session"/>
+    </div>
+    <div class="form-group">
+      <div class="form-row">
+        <div>
+          <label>Start Time</label>
+          <input type="time" class="form-input" id="m-start"/>
+        </div>
+        <div>
+          <label>End Time</label>
+          <input type="time" class="form-input" id="m-end"/>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Priority</label>
+      <select class="form-select" id="m-priority">
+        <option>Low</option>
+        <option selected>Medium</option>
+        <option>High</option>
+      </select>
+    </div>
+    <button class="btn-save" onclick="saveRoutine()">💾 Save Routine</button>
+  </div>
+</div>
+
+<!-- LOG MODAL -->
+<div class="modal-overlay" id="logModal">
+  <div class="modal log-modal">
+    <div class="modal-header">
+      <h2>⏱ Log Actual Time</h2>
+      <button class="modal-close" onclick="closeLogModal()">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Actual Start Time</label>
+      <input type="time" class="form-input" id="l-start"/>
+    </div>
+    <div class="form-group">
+      <label>Actual End Time</label>
+      <input type="time" class="form-input" id="l-end"/>
+    </div>
+    <input type="hidden" id="l-idx"/>
+    <button class="btn-save" onclick="saveLog()">✅ Save Log</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let routines = JSON.parse(localStorage.getItem('hf_routines') || '{}'); // { date: [...] }
+let settings = JSON.parse(localStorage.getItem('hf_settings') || '{}');
+let compChart, pieChartInst, driftChartInst;
+let currentDate = new Date().toISOString().split('T')[0];
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+window.onload = function() {
+  const dateEl = document.getElementById('dashDate');
+  dateEl.value = currentDate;
+  initCharts();
+  renderDashboard();
+  renderHistory();
+  applySettings();
+};
+
+function applySettings() {
+  if (settings.name) document.getElementById('s-name').value = settings.name;
+  if (settings.email) document.getElementById('s-email').value = settings.email;
+  if (settings.startDay) document.getElementById('s-startday').value = settings.startDay;
+  if (settings.duration) document.getElementById('s-duration').value = settings.duration;
+  if (settings.defPriority) document.getElementById('s-defpriority').value = settings.defPriority;
+}
+
+// ═══════════════════════════════════════════════
+//  PAGE NAVIGATION
+// ═══════════════════════════════════════════════
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pg = document.getElementById(id);
+  if (pg) { pg.classList.add('active'); if (btn) btn.classList.add('active'); }
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'history') renderHistory();
+  document.title = 'HABITFLUX – ' + id.charAt(0).toUpperCase() + id.slice(1).replace('-',' ');
+}
+
+// ═══════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════
+function timeToMins(t) {
+  if (!t) return 0;
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+function formatMins(m) {
+  m = Math.abs(m);
+  if (m >= 60) return Math.floor(m/60) + 'h ' + (m%60) + 'm';
+  return m + 'm';
+}
+function getDateRoutines() {
+  return routines[currentDate] || [];
+}
+function saveRoutines() {
+  localStorage.setItem('hf_routines', JSON.stringify(routines));
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ═══════════════════════════════════════════════
+//  DATE CHANGE
+// ═══════════════════════════════════════════════
+function onDateChange() {
+  currentDate = document.getElementById('dashDate').value;
+  renderDashboard();
+}
+
+// ═══════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════
+function openAddModal() { document.getElementById('addModal').classList.add('open'); }
+function closeAddModal() { document.getElementById('addModal').classList.remove('open'); }
+function closeLogModal() { document.getElementById('logModal').classList.remove('open'); }
+
+function saveRoutine() {
+  const task = document.getElementById('m-task').value.trim();
+  const start = document.getElementById('m-start').value;
+  const end = document.getElementById('m-end').value;
+  const priority = document.getElementById('m-priority').value;
+  if (!task || !start || !end) { showToast('⚠️ Please fill all fields'); return; }
+  if (!routines[currentDate]) routines[currentDate] = [];
+  routines[currentDate].push({ task, start, end, priority, actual: null });
+  saveRoutines();
+  closeAddModal();
+  document.getElementById('m-task').value = '';
+  document.getElementById('m-start').value = '';
+  document.getElementById('m-end').value = '';
+  renderDashboard(); renderHistory();
+  showToast('✅ Routine saved!');
+}
+
+function saveRoutineFromPage() {
+  const task = document.getElementById('ar-task').value.trim();
+  const start = document.getElementById('ar-start').value;
+  const end = document.getElementById('ar-end').value;
+  const priority = document.getElementById('ar-priority').value;
+  if (!task || !start || !end) { showToast('⚠️ Please fill all fields'); return; }
+  if (!routines[currentDate]) routines[currentDate] = [];
+  routines[currentDate].push({ task, start, end, priority, actual: null });
+  saveRoutines();
+  document.getElementById('ar-task').value = '';
+  document.getElementById('ar-start').value = '';
+  document.getElementById('ar-end').value = '';
+  renderDashboard(); renderHistory();
+  showToast('✅ Routine saved!');
+  showPage('dashboard', document.querySelector('.nav-item'));
+  document.querySelector('.nav-item').classList.add('active');
+}
+
+function openLogModal(idx) {
+  document.getElementById('l-idx').value = idx;
+  document.getElementById('l-start').value = '';
+  document.getElementById('l-end').value = '';
+  document.getElementById('logModal').classList.add('open');
+}
+
+function saveLog() {
+  const idx = parseInt(document.getElementById('l-idx').value);
+  const start = document.getElementById('l-start').value;
+  const end = document.getElementById('l-end').value;
+  if (!start || !end) { showToast('⚠️ Fill both times'); return; }
+  routines[currentDate][idx].actual = { start, end };
+  saveRoutines();
+  closeLogModal();
+  renderDashboard(); renderHistory();
+  showToast('✅ Activity logged!');
+}
+
+function deleteRoutine(idx) {
+  routines[currentDate].splice(idx, 1);
+  saveRoutines();
+  renderDashboard(); renderHistory();
+  showToast('🗑 Routine deleted');
+}
+
+// ═══════════════════════════════════════════════
+//  DASHBOARD RENDER
+// ═══════════════════════════════════════════════
+function renderDashboard() {
+  const list = getDateRoutines();
+  let totalPlanned = 0, totalActual = 0;
+
+  // Table
+  const tbody = document.getElementById('routinesTbody');
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="color:#aaa;font-size:0.82rem;padding:1.5rem 0.8rem;">No routines for this date. Click "Add Routine" to get started.</td></tr>`;
+  } else {
+    tbody.innerHTML = list.map((r, i) => {
+      const planned = timeToMins(r.end) - timeToMins(r.start);
+      totalPlanned += planned;
+      let actual = '–', drift = '–', status = '–', driftVal = 0;
+      if (r.actual) {
+        const act = timeToMins(r.actual.end) - timeToMins(r.actual.start);
+        totalActual += act;
+        actual = `${r.actual.start}–${r.actual.end} (${act}m)`;
+        driftVal = act - planned;
+        drift = (driftVal >= 0 ? '+' : '') + driftVal + 'm';
+        status = driftVal <= 0 ? '✅ On Track' : '⚠️ Over';
+      }
+      return `<tr>
+        <td>${r.task}</td>
+        <td>${r.start}–${r.end} (${planned}m)</td>
+        <td>${actual}</td>
+        <td>${drift}</td>
+        <td>${status}</td>
+        <td><span class="priority-badge">${r.priority}</span></td>
+        <td style="display:flex;gap:0.4rem;">
+          <button class="action-btn" onclick="openLogModal(${i})">Log</button>
+          <button class="action-btn del" onclick="deleteRoutine(${i})">🗑</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Stats
+  const driftTotal = totalActual - totalPlanned;
+  const prod = totalPlanned > 0 ? Math.max(0, Math.round((totalActual / totalPlanned) * 100)) : 0;
+  document.getElementById('totalPlanned').textContent = formatMins(totalPlanned) || '0m';
+  document.getElementById('totalActual').textContent = formatMins(totalActual) || '0m';
+  document.getElementById('totalDrift').textContent = formatMins(driftTotal) || '0m';
+  document.getElementById('productivity').textContent = prod + '%';
+
+  const logged = list.filter(r => r.actual);
+
+  // Drift level
+  if (logged.length === 0) {
+    document.getElementById('driftLevel').textContent = 'No Data';
+    document.getElementById('driftLevel').className = 'cs-val tag-green';
+  } else {
+    const avg = driftTotal / logged.length;
+    let lvl = avg <= 0 ? 'On Track 🟢' : avg < 10 ? 'Mild Drift 🟡' : 'High Drift 🔴';
+    document.getElementById('driftLevel').textContent = lvl;
+  }
+
+  // Most missed
+  if (logged.length > 0) {
+    let worst = list.filter(r => r.actual).reduce((a, b) => {
+      const da = (timeToMins(a.actual.end) - timeToMins(a.actual.start)) - (timeToMins(a.end) - timeToMins(a.start));
+      const db = (timeToMins(b.actual.end) - timeToMins(b.actual.start)) - (timeToMins(b.end) - timeToMins(b.start));
+      return db > da ? b : a;
+    });
+    const wd = (timeToMins(worst.actual.end) - timeToMins(worst.actual.start)) - (timeToMins(worst.end) - timeToMins(worst.start));
+    document.getElementById('mostMissed').textContent = wd > 0 ? worst.task : '–';
+  } else {
+    document.getElementById('mostMissed').textContent = '–';
+  }
+
+  // Smart insight
+  if (logged.length === 0) {
+    document.getElementById('smartInsight').textContent = 'Log your first activity to unlock AI-powered productivity insights.';
+    document.getElementById('suggestions').textContent = 'Log activities to unlock smart suggestions.';
+  } else {
+    document.getElementById('smartInsight').textContent = `You've logged ${logged.length} of ${list.length} routines today. Your productivity score is ${prod}%. ${prod >= 80 ? 'Excellent work! Keep it up.' : prod >= 50 ? 'Good progress — stay focused.' : 'Try to reduce drift by sticking closer to your planned schedule.'}`;
+    document.getElementById('suggestions').innerHTML = prod < 50
+      ? '💡 Consider breaking large tasks into smaller chunks to reduce drift.<br>📅 Try adjusting your planned times based on your actual performance patterns.'
+      : '✅ You are performing well! Review any tasks with high drift and adjust future plans accordingly.';
+  }
+
+  updateCharts(list);
+}
+
+// ═══════════════════════════════════════════════
+//  CHARTS
+// ═══════════════════════════════════════════════
+function initCharts() {
+  const chartDefaults = { responsive: true, maintainAspectRatio: false };
+
+  compChart = new Chart(document.getElementById('comparisonChart'), {
+    type: 'bar',
+    data: { labels: [], datasets: [
+      { label: 'Planned', data: [], backgroundColor: '#3d5a80' },
+      { label: 'Actual', data: [], backgroundColor: '#4caf82' }
+    ]},
+    options: { ...chartDefaults, plugins: { legend: { display: false } },
+      scales: { x: { ticks: { color: '#888', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                y: { ticks: { color: '#888', font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.05)' } } } }
+  });
+
+  pieChartInst = new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: { labels: ['Productive', 'Drift'], datasets: [{ data: [0, 0], backgroundColor: ['#4caf82', '#e05050'], borderWidth: 0 }] },
+    options: { ...chartDefaults, plugins: { legend: { display: false } } }
+  });
+
+  driftChartInst = new Chart(document.getElementById('driftChart'), {
+    type: 'line',
+    data: { labels: [], datasets: [{ label: 'Drift', data: [], borderColor: '#e05050', backgroundColor: 'rgba(224,80,80,0.1)', tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#e05050' }] },
+    options: { ...chartDefaults, plugins: { legend: { display: false } },
+      scales: { x: { ticks: { color: '#888', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { ticks: { color: '#888', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
+  });
+}
+
+function updateCharts(list) {
+  const logged = list.filter(r => r.actual);
+
+  // Comparison
+  compChart.data.labels = list.map(r => r.task.length > 10 ? r.task.slice(0,10)+'…' : r.task);
+  compChart.data.datasets[0].data = list.map(r => timeToMins(r.end) - timeToMins(r.start));
+  compChart.data.datasets[1].data = list.map(r => r.actual ? timeToMins(r.actual.end) - timeToMins(r.actual.start) : 0);
+  compChart.update();
+
+  // Pie
+  const totalPlan = list.reduce((s, r) => s + timeToMins(r.end) - timeToMins(r.start), 0);
+  const totalAct = logged.reduce((s, r) => s + timeToMins(r.actual.end) - timeToMins(r.actual.start), 0);
+  const productive = Math.min(totalAct, totalPlan);
+  const drift = Math.max(0, totalAct - totalPlan);
+  pieChartInst.data.datasets[0].data = [productive || 1, drift];
+  pieChartInst.update();
+
+  // Drift trend (last 7 days)
+  const days = []; const drifts = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    days.push(key.slice(5));
+    const dr = (routines[key] || []).filter(r => r.actual);
+    const dval = dr.reduce((s, r) => s + (timeToMins(r.actual.end) - timeToMins(r.actual.start)) - (timeToMins(r.end) - timeToMins(r.start)), 0);
+    drifts.push(dr.length > 0 ? dval : null);
+  }
+  driftChartInst.data.labels = days;
+  driftChartInst.data.datasets[0].data = drifts;
+  driftChartInst.update();
+}
+
+// ═══════════════════════════════════════════════
+//  HISTORY
+// ═══════════════════════════════════════════════
+function renderHistory() {
+  const container = document.getElementById('historyContent');
+  const allDates = Object.keys(routines).sort().reverse();
+  if (allDates.length === 0) {
+    container.innerHTML = '<div class="history-empty">No history yet. Start logging your routines to see them here.</div>';
+    return;
+  }
+  container.innerHTML = allDates.map(date => {
+    const list = routines[date];
+    if (!list || list.length === 0) return '';
+    return `<div style="margin-bottom:1.5rem;">
+      <div style="font-size:0.78rem;font-weight:600;color:var(--text-muted);margin-bottom:0.6rem;letter-spacing:0.06em;">${date}</div>
+      <table class="history-table">
+        <thead><tr><th>TASK</th><th>PLANNED</th><th>ACTUAL</th><th>DRIFT</th><th>STATUS</th></tr></thead>
+        <tbody>${list.map(r => {
+          const planned = timeToMins(r.end) - timeToMins(r.start);
+          let actual = '–', drift = '–', status = '–';
+          if (r.actual) {
+            const act = timeToMins(r.actual.end) - timeToMins(r.actual.start);
+            actual = `${r.actual.start}–${r.actual.end}`;
+            const dv = act - planned;
+            drift = (dv >= 0 ? '+' : '') + dv + 'm';
+            status = dv <= 0 ? '✅ On Track' : '⚠️ Over';
+          }
+          return `<tr><td>${r.task}</td><td>${r.start}–${r.end}</td><td>${actual}</td><td>${drift}</td><td>${status}</td></tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+//  SETTINGS ACTIONS
+// ═══════════════════════════════════════════════
+function updateProfile() {
+  settings.name = document.getElementById('s-name').value;
+  settings.email = document.getElementById('s-email').value;
+  localStorage.setItem('hf_settings', JSON.stringify(settings));
+  showToast('✅ Profile updated!');
+}
+function changePassword() {
+  const cur = document.getElementById('s-curpass').value;
+  const nw = document.getElementById('s-newpass').value;
+  if (!cur || !nw) { showToast('⚠️ Fill both password fields'); return; }
+  showToast('✅ Password changed (demo)');
+  document.getElementById('s-curpass').value = '';
+  document.getElementById('s-newpass').value = '';
+}
+function savePreferences() {
+  settings.startDay = document.getElementById('s-startday').value;
+  settings.duration = document.getElementById('s-duration').value;
+  settings.defPriority = document.getElementById('s-defpriority').value;
+  localStorage.setItem('hf_settings', JSON.stringify(settings));
+  showToast('✅ Preferences saved!');
+}
+function exportJSON() {
+  const data = JSON.stringify(routines, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'habitflux-data.json'; a.click();
+  showToast('✅ JSON exported!');
+}
+function exportPDF() { showToast('📄 PDF export (connect print dialog)'); window.print(); }
+function clearAllData() {
+  if (confirm('Clear ALL your routine data? This cannot be undone.')) {
+    routines = {}; localStorage.removeItem('hf_routines');
+    renderDashboard(); renderHistory();
+    showToast('🗑 All data cleared');
+  }
+}
+</script>
+</body>
+</html>
