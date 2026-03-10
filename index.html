@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HABITFLUX – Smart Drift Analysis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy: #1a2740;
+      --navy-dark: #111c2e;
+      --navy-mid: #243350;
+      --cream: #f5f0e8;
+      --cream-light: #faf7f2;
+      --orange: #e06030;
+      --orange-light: #f07848;
+      --gold: #d4a847;
+      --green: #4caf82;
+      --text-muted: #8b9bb4;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--navy-dark);
+      color: var(--cream);
+      overflow-x: hidden;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 3rem;
+      background: rgba(17,28,46,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 0.6rem; }
+    .nav-logo span.icon { font-size: 1.4rem; }
+    .nav-logo span.name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 1.2rem;
+      letter-spacing: 0.05em;
+      color: var(--cream);
+    }
+    .nav-links { display: flex; gap: 2rem; align-items: center; }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none;
+      font-size: 0.9rem; font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--cream); }
+    .nav-cta {
+      background: var(--navy-mid);
+      color: var(--cream) !important;
+      padding: 0.5rem 1.3rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.12);
+      transition: background 0.2s !important;
+    }
+    .nav-cta:hover { background: var(--orange) !important; color: #fff !important; }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 8rem 2rem 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(224,96,48,0.12) 0%, transparent 70%),
+                  radial-gradient(ellipse 60% 40% at 80% 80%, rgba(76,175,130,0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(224,96,48,0.15);
+      border: 1px solid rgba(224,96,48,0.3);
+      border-radius: 99px;
+      padding: 0.35rem 1rem;
+      font-size: 0.8rem; color: var(--orange-light);
+      margin-bottom: 2rem;
+      animation: fadeUp 0.6s ease both;
+    }
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+    .hero h1 em {
+      font-style: normal;
+      color: var(--orange);
+    }
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      max-width: 540px;
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+    .hero-actions {
+      display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+      animation: fadeUp 0.6s 0.3s ease both;
+    }
+    .btn-primary {
+      background: var(--orange);
+      color: #fff;
+      padding: 0.85rem 2rem;
+      border-radius: 10px;
+      font-weight: 600; font-size: 0.95rem;
+      text-decoration: none;
+      border: none; cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      display: inline-block;
+    }
+    .btn-primary:hover { background: var(--orange-light); transform: translateY(-1px); }
+    .btn-secondary {
+      background: transparent;
+      color: var(--cream);
+      padding: 0.85rem 2rem;
+      border-radius: 10px;
+      font-weight: 500; font-size: 0.95rem;
+      text-decoration: none;
+      border: 1px solid rgba(255,255,255,0.18);
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      display: inline-block;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.3); }
+
+    /* STATS BAR */
+    .stats-bar {
+      display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap;
+      padding: 2rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      margin: 0 2rem;
+      animation: fadeUp 0.6s 0.4s ease both;
+    }
+    .stat-item { text-align: center; }
+    .stat-item .val {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem; font-weight: 800;
+      color: var(--cream);
+    }
+    .stat-item .label { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+    /* FEATURES */
+    .features {
+      padding: 6rem 2rem;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .section-label {
+      text-align: center;
+      font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--orange); margin-bottom: 1rem;
+    }
+    .section-title {
+      text-align: center;
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 700;
+      margin-bottom: 3.5rem;
+      color: var(--cream);
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    .feature-card {
+      background: var(--navy);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .feature-card:hover { transform: translateY(-4px); border-color: rgba(224,96,48,0.3); }
+    .feature-icon {
+      font-size: 2rem; margin-bottom: 1.2rem;
+      display: block;
+    }
+    .feature-card h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem; font-weight: 700;
+      margin-bottom: 0.6rem; color: var(--cream);
+    }
+    .feature-card p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; }
+
+    /* HOW IT WORKS */
+    .how {
+      background: var(--navy);
+      padding: 6rem 2rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .how-inner { max-width: 900px; margin: 0 auto; }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; }
+    .step { text-align: center; padding: 1.5rem; }
+    .step-num {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: var(--orange);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem;
+      margin: 0 auto 1.2rem;
+    }
+    .step h3 { font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 0.5rem; }
+    .step p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; }
+
+    /* CTA SECTION */
+    .cta-section {
+      padding: 6rem 2rem;
+      text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 70% 50% at 50% 50%, rgba(224,96,48,0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-section h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 4vw, 3rem); font-weight: 800;
+      margin-bottom: 1rem;
+    }
+    .cta-section p { color: var(--text-muted); margin-bottom: 2rem; font-size: 1rem; }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 2rem 3rem;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    footer .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem; }
+    footer p { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* MOCK DASHBOARD PREVIEW */
+    .preview-wrap {
+      max-width: 900px; margin: 3rem auto 0;
+      position: relative;
+      animation: fadeUp 0.7s 0.5s ease both;
+    }
+    .preview-frame {
+      background: var(--navy);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+      overflow: hidden;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+    }
+    .preview-bar {
+      background: var(--navy-dark);
+      padding: 0.8rem 1rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot.r { background: #ff5f57; }
+    .dot.y { background: #febc2e; }
+    .dot.g { background: #28c840; }
+    .preview-content {
+      display: grid; grid-template-columns: 180px 1fr;
+      height: 320px;
+    }
+    .preview-sidebar {
+      background: var(--navy-dark);
+      padding: 1.2rem;
+      border-right: 1px solid rgba(255,255,255,0.07);
+    }
+    .preview-sidebar .p-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.85rem; margin-bottom: 0.3rem; }
+    .preview-sidebar .p-sub { font-size: 0.65rem; color: var(--text-muted); margin-bottom: 1.2rem; }
+    .preview-nav-item {
+      padding: 0.5rem 0.7rem; border-radius: 8px;
+      font-size: 0.75rem; margin-bottom: 0.3rem;
+      color: var(--text-muted); cursor: default;
+    }
+    .preview-nav-item.active { background: var(--navy-mid); color: var(--cream); }
+    .preview-main { padding: 1.2rem; overflow: hidden; }
+    .preview-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 0.3rem; }
+    .preview-sub { font-size: 0.65rem; color: var(--text-muted); margin-bottom: 1rem; }
+    .preview-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; margin-bottom: 1rem; }
+    .preview-card {
+      background: var(--cream); border-radius: 8px; padding: 0.7rem;
+    }
+    .preview-card:last-child { background: var(--navy-dark); }
+    .preview-card .pc-label { font-size: 0.55rem; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; }
+    .preview-card .pc-val { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.9rem; color: var(--navy); }
+    .preview-card:last-child .pc-val { color: var(--cream); }
+    .preview-bars { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .preview-chart { background: var(--cream); border-radius: 8px; padding: 0.7rem; height: 80px; }
+    .preview-chart .pc-title { font-size: 0.6rem; font-weight: 600; color: var(--navy); margin-bottom: 0.5rem; }
+    .chart-placeholder { 
+      display: flex; align-items: flex-end; gap: 3px; height: 45px;
+    }
+    .bar { border-radius: 2px 2px 0 0; flex: 1; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-logo">
+      <span class="icon">🌊</span>
+      <span class="name">HABITFLUX</span>
+    </div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#how">How it Works</a>
+      <a href="dashboard.html" class="nav-cta">Open Dashboard →</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge">🧠 AI-Powered Productivity Tracking</div>
+    <h1>Track Your Habits.<br/>Analyze Your <em>Drift</em>.</h1>
+    <p>HABITFLUX monitors the gap between your planned and actual daily routine — so you can spot patterns, reduce drift, and build consistent habits that stick.</p>
+    <div class="hero-actions">
+      <a href="dashboard.html" class="btn-primary">Open Dashboard →</a>
+      <a href="#features" class="btn-secondary">Learn More</a>
+    </div>
+
+    <!-- MOCK PREVIEW -->
+    <div class="preview-wrap">
+      <div class="preview-frame">
+        <div class="preview-bar">
+          <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+        </div>
+        <div class="preview-content">
+          <div class="preview-sidebar">
+            <div class="p-logo">🌊 HABITFLUX</div>
+            <div class="p-sub">Smart Drift Analysis</div>
+            <div class="preview-nav-item active">📊 Dashboard</div>
+            <div class="preview-nav-item">➕ Add Routine</div>
+            <div class="preview-nav-item">⚙️ Settings</div>
+            <div class="preview-nav-item">🕐 History</div>
+          </div>
+          <div class="preview-main">
+            <div class="preview-title">🌊 Dashboard Overview</div>
+            <div class="preview-sub">Monitor your daily productivity and drift analysis</div>
+            <div class="preview-cards">
+              <div class="preview-card">
+                <div class="pc-label">Total Planned</div>
+                <div class="pc-val">2h 5m</div>
+              </div>
+              <div class="preview-card">
+                <div class="pc-label">Total Actual</div>
+                <div class="pc-val">0m</div>
+              </div>
+              <div class="preview-card">
+                <div class="pc-label">Total Drift</div>
+                <div class="pc-val">0m</div>
+              </div>
+              <div class="preview-card">
+                <div class="pc-label">Productivity</div>
+                <div class="pc-val">0%</div>
+              </div>
+            </div>
+            <div class="preview-bars">
+              <div class="preview-chart">
+                <div class="pc-title">📊 Routine Comparison</div>
+                <div class="chart-placeholder">
+                  <div class="bar" style="height:30%;background:#3d5a80"></div>
+                  <div class="bar" style="height:55%;background:#3d5a80"></div>
+                  <div class="bar" style="height:40%;background:#3d5a80"></div>
+                  <div class="bar" style="height:70%;background:#3d5a80"></div>
+                  <div class="bar" style="height:25%;background:#3d5a80"></div>
+                  <div class="bar" style="height:45%;background:#4caf82"></div>
+                  <div class="bar" style="height:60%;background:#4caf82"></div>
+                  <div class="bar" style="height:35%;background:#4caf82"></div>
+                </div>
+              </div>
+              <div class="preview-chart">
+                <div class="pc-title">🍩 Productive vs Wasted</div>
+                <div class="chart-placeholder" style="justify-content:center;align-items:center;height:45px;">
+                  <div style="width:45px;height:45px;border-radius:50%;border:6px solid #4caf82;border-right-color:#e06030;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats-bar">
+    <div class="stat-item"><div class="val">📅</div><div class="label">Daily Routine Tracking</div></div>
+    <div class="stat-item"><div class="val">📈</div><div class="label">Drift Analysis Charts</div></div>
+    <div class="stat-item"><div class="val">🧠</div><div class="label">AI Smart Insights</div></div>
+    <div class="stat-item"><div class="val">📄</div><div class="label">PDF Export</div></div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">Everything you need to<br/>master your routine</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">📊</span>
+        <h3>Drift Analysis</h3>
+        <p>Automatically calculates the gap between your planned and actual time for every task, giving you a real drift score each day.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🧠</span>
+        <h3>Smart Insights</h3>
+        <p>AI-powered suggestions based on your logged activity patterns to help you identify your most productive hours and habits.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📅</span>
+        <h3>Routine Planner</h3>
+        <p>Add planned routines with start time, end time, and priority. Log actuals later to compare your plan vs reality.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📈</span>
+        <h3>Visual Charts</h3>
+        <p>Routine comparison bar charts, productive vs wasted pie charts, and drift trend line graphs — all in one dashboard.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🔔</span>
+        <h3>Notifications</h3>
+        <p>Get drift alerts, daily productivity summaries, and task reminders to keep you on track throughout the day.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">📄</span>
+        <h3>Export & History</h3>
+        <p>Export your data as JSON or PDF. Browse your full activity history and clear data to start fresh anytime.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how" id="how">
+    <div class="how-inner">
+      <div class="section-label">How It Works</div>
+      <h2 class="section-title">Simple 3-step system</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Plan Your Day</h3>
+          <p>Add your planned routines for the day with task name, start time, end time, and priority level.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>Log Actuals</h3>
+          <p>After completing each task, log the actual time spent. HABITFLUX computes your drift score instantly.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>Analyze & Improve</h3>
+          <p>Review charts, read AI smart suggestions, and use your drift data to build better habits over time.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <h2>Start tracking your drift today</h2>
+    <p>No signup required. Open the dashboard and begin logging your first routine.</p>
+    <a href="dashboard.html" class="btn-primary">Open Dashboard →</a>
+  </section>
+
+  <footer>
+    <div class="logo">🌊 HABITFLUX</div>
+    <p>Smart Drift Analysis — Monitor, Analyze, Improve.</p>
+  </footer>
+
+</body>
+</html>
